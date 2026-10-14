@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample Site | 子画面で確認</title>
+<style>
+  :root { --brand:#2563eb; --bg:#f8fafc; --text:#0f172a; --muted:#64748b; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:"Segoe UI","Yu Gothic UI",sans-serif; color:var(--text); background:var(--bg); line-height:1.7; }
+  header { background:#fff; border-bottom:1px solid #e2e8f0; position:sticky; top:0; }
+  .nav { max-width:960px; margin:auto; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+  .logo { font-weight:700; font-size:1.2rem; color:var(--brand); }
+  .nav a { color:var(--muted); text-decoration:none; margin-left:20px; font-size:.95rem; }
+  .hero { max-width:960px; margin:auto; padding:80px 20px 60px; text-align:center; }
+  .hero h1 { font-size:2.4rem; margin-bottom:12px; }
+  .hero p { color:var(--muted); margin-bottom:32px; }
+  .btn { background:var(--brand); color:#fff; border:0; padding:14px 32px; font-size:1rem; border-radius:8px; cursor:pointer; }
+  .btn:hover { filter:brightness(1.1); }
+  .cards { max-width:960px; margin:auto; padding:0 20px 60px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; }
+  .card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; }
+  .card h3 { margin-bottom:8px; }
+  .card p { color:var(--muted); font-size:.92rem; }
+  #result { max-width:960px; margin:0 auto 40px; padding:0 20px; text-align:center; font-weight:600; min-height:1.7em; }
+  footer { text-align:center; color:var(--muted); font-size:.85rem; padding:30px; border-top:1px solid #e2e8f0; background:#fff; }
+</style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <span class="logo">SampleSite</span>
+    <nav><a href="#">ホーム</a><a href="#">サービス</a><a href="#">お問い合わせ</a></nav>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>お申し込みはこちらから</h1>
+  <p>ボタンを押すと子画面が開き、内容の確認ダイアログが表示されます。</p>
+  <button class="btn" id="open">申し込む（子画面を開く）</button>
+</section>
+
+<div id="result"></div>
+
+<section class="cards">
+  <div class="card"><h3>かんたん</h3><p>数クリックで手続きが完了します。</p></div>
+  <div class="card"><h3>あんしん</h3><p>実行前に必ず確認画面が表示されます。</p></div>
+  <div class="card"><h3>はやい</h3><p>結果はこのページにすぐ反映されます。</p></div>
+</section>
+
+<footer>&copy; 2026 SampleSite</footer>
+
+<script>
+(function () {
+  var result = document.getElementById('result');
+
+  // 子画面に書き込むHTML（子画面側でconfirmを実行する）
+  var childHtml = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">' +
+    '<title>確認</title><style>' +
+    'body{font-family:"Segoe UI","Yu Gothic UI",sans-serif;background:#f8fafc;color:#0f172a;text-align:center;padding:40px 20px}' +
+    'h2{margin-bottom:8px}p{color:#64748b;margin-bottom:20px}' +
+    'button{background:#2563eb;color:#fff;border:0;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:1rem}' +
+    '</style></head><body>' +
+    '<h2>お申し込み内容</h2><p id="m">下のボタンを押すと確認ダイアログが表示されます。</p>' +
+    '<button id="submit">この内容で申し込む</button>' +
+    '<script>' +
+    'document.getElementById("submit").onclick = function(){' +
+    '  var ok = confirm("この内容で申し込みますか？");' +
+    '  document.getElementById("m").textContent = ok ? "申し込みを受け付けました。" : "キャンセルしました。";' +
+    '  if (window.opener) window.opener.postMessage({type:"confirmResult", ok:ok}, "*");' +
+    '  if (ok) setTimeout(function(){ window.close(); }, 1200);' +
+    '};' +
+    '<\/script></body></html>';
+
+  document.getElementById('open').addEventListener('click', function () {
+    var w = window.open('', 'confirmWindow', 'width=420,height=300,left=200,top=150');
+    if (!w) { result.textContent = 'ポップアップがブロックされました。アドレスバーの許可設定を確認してください。'; return; }
+    w.document.open();
+    w.document.write(childHtml);
+    w.document.close();
+    w.focus();
+  });
+
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'confirmResult') {
+      result.textContent = e.data.ok ? '✅ 申し込みが完了しました' : '❌ 申し込みはキャンセルされました';
+      result.style.color = e.data.ok ? '#16a34a' : '#dc2626';
+    }
+  });
+})();
+</script>
+</body>
+</html>
